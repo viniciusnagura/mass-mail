@@ -1,7 +1,23 @@
 (ns mass-mail.core
   (:gen-class)
   (use clojure.java.io)
-  (require [clojure.tools.cli :refer [cli]]))
+  (require [clojure.tools.cli :refer [cli]]
+           [postal.core :refer [send-message]]))
+
+;; Replace the following with your own credentials
+(def email "heijmeijer@gmail.com")
+(def pass "teste")
+
+(def conn {:host "smtp.gmail.com"
+           :ssl true
+           :user email
+           :pass pass})
+
+(send-message conn {:from email
+                    :to "aheijmeijer@uol.com.br"
+                    :subject "A message, from the past"
+                    :body "Hi there, me!"})
+;; -> {:error :SUCCESS, :code 0, :message "messages sent"}
 
 (defn set-infos
   "Set all the informations that were given through command line"
