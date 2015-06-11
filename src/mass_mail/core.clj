@@ -4,13 +4,13 @@
 (import org.apache.commons.mail.SimpleEmail)
 
 
-(defn email-sender [email-to email-address account-password message-subject message-body]
+(defn email-sender [email-to name email-address account-password message-subject message-body]
   (doto (SimpleEmail.)
     (.setHostName "smtp.gmail.com")
     (.setSslSmtpPort "465")
     (.setSSL true)
     (.addTo email-to)
-    (.setFrom email-address "Qualquer coisa")
+    (.setFrom email-address name)
     (.setSubject message-subject)
     (.setMsg message-body)
     (.setAuthentication email-address account-password)
@@ -21,14 +21,15 @@
   [opts]
   (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
            (map #(clojure.string/split % #":")))
+        name (get opts :name)
         email-address (get opts :email)
         account-password (get opts :password)
         message-subject (get opts :subject)
         message-body (get opts :body)]
-        
+
     (loop [emails list-of-emails]
       (when (not (empty? emails))
-        (email-sender (second (first emails)) email-address account-password message-subject message-body)
+        (email-sender (second (first emails)) name email-address account-password message-subject message-body)
         (recur (rest emails))
         )
       )
@@ -41,12 +42,14 @@
   (let [[opts args banner]
         (cli args
              ["-f" "--file" "REQUIRED: file containing the list of email addresses"]
+             ["-n" "--name" "NOT REQUIRED: name" :default ""]
              ["-e" "--email" "REQUIRED: email address where the message will be sent from"]
              ["-p" "--password" "REQUIRED: password for email account"]
              ["-s" "--subject" "NOT REQUIRED: subject of the message" :default ""]
              ["-b" "--body" "NOT REQUIRED: body of the message" :default ""])]
     (if (and
           (:file opts)
+          (:name opts)
           (:email opts)
           (:password opts)
           (:subject opts)
