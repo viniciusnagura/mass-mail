@@ -1,7 +1,7 @@
 (ns mass-mail.core
   (:gen-class)
   (require [clojure.tools.cli :refer [cli]]))
-(import 'org.apache.commons.mail.SimpleEmail)
+(import org.apache.commons.mail.SimpleEmail)
 
 
 (defn email-sender [email-to email-address account-password message-subject message-body]
@@ -20,12 +20,20 @@
   "Set all the informations that were given through command line"
   [opts]
   (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
-                            (map #(clojure.string/split % #":")))
+           (map #(clojure.string/split % #":")))
         email-address (get opts :email)
         account-password (get opts :password)
         message-subject (get opts :subject)
         message-body (get opts :body)]
-    (map #(apply email-sender (apply str (second %)) email-address account-password message-subject message-body) list-of-emails)))
+        
+    (loop [emails list-of-emails]
+      (when (not (empty? emails))
+        (email-sender (second (first emails)) email-address account-password message-subject message-body)
+        (recur (rest emails))
+        )
+      )
+    )
+  )
 
 (defn -main
   "Read the list of email addresses and set the email informations"
