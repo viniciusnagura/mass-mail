@@ -3,10 +3,6 @@
   (require [clojure.tools.cli :refer [cli]]))
 (import 'org.apache.commons.mail.SimpleEmail)
 
-(defn send-email [list-of-emails email-address account-password message-subject message-body]
-  (def list list-of-emails)
-  (while (not (empty? list))
-    ()))
 
 (defn email-sender [email-to email-address account-password message-subject message-body]
   (doto (SimpleEmail.)
@@ -29,7 +25,7 @@
         account-password (get opts :password)
         message-subject (get opts :subject)
         message-body (get opts :body)]
-    (send-email list-of-emails email-address account-password message-subject message-body)))
+    (map #(apply email-sender (apply str (second %)) email-address account-password message-subject message-body) list-of-emails)))
 
 (defn -main
   "Read the list of email addresses and set the email informations"
