@@ -1,23 +1,24 @@
 (ns mass-mail.core
   (:gen-class)
-  (use clojure.java.io)
-  (require [clojure.tools.cli :refer [cli]]
-           [postal.core :refer [send-message]]))
+  (require [clojure.tools.cli :refer [cli]]))
+(import 'org.apache.commons.mail.SimpleEmail)
 
-;; Replace the following with your own credentials
-(def email "heijmeijer@gmail.com")
-(def pass "teste")
+(defn send-email [list-of-emails email-address account-password message-subject message-body]
+  (def list list-of-emails)
+  (while (not (empty? list))
+    ()))
 
-(def conn {:host "smtp.gmail.com"
-           :ssl true
-           :user email
-           :pass pass})
-
-(send-message conn {:from email
-                    :to "aheijmeijer@uol.com.br"
-                    :subject "A message, from the past"
-                    :body "Hi there, me!"})
-;; -> {:error :SUCCESS, :code 0, :message "messages sent"}
+(defn email-sender [email-to email-address account-password message-subject message-body]
+  (doto (SimpleEmail.)
+    (.setHostName "smtp.gmail.com")
+    (.setSslSmtpPort "465")
+    (.setSSL true)
+    (.addTo email-to)
+    (.setFrom email-address "Qualquer coisa")
+    (.setSubject message-subject)
+    (.setMsg message-body)
+    (.setAuthentication email-address account-password)
+    (.send)))
 
 (defn set-infos
   "Set all the informations that were given through command line"
@@ -28,7 +29,7 @@
         account-password (get opts :password)
         message-subject (get opts :subject)
         message-body (get opts :body)]
-    (println list-of-emails email-address account-password message-subject message-body)))
+    (send-email list-of-emails email-address account-password message-subject message-body)))
 
 (defn -main
   "Read the list of email addresses and set the email informations"
