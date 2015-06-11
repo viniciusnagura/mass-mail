@@ -3,6 +3,16 @@
   (use clojure.java.io)
   (require [clojure.tools.cli :refer [cli]]))
 
+(defn set-infos
+  "Set all the informations that were given through command line"
+  [opts]
+  (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
+                            (map #(clojure.string/split % #":")))
+        email-address (get opts :email)
+        account-password (get opts :password)
+        message-subject (get opts :subject)
+        message-body (get opts :body)]
+    (println list-of-emails email-address account-password message-subject message-body)))
 
 (defn -main
   "Read the list of email addresses and set the email informations"
@@ -20,4 +30,4 @@
           (:password opts)
           (:subject opts)
           (:body opts))
-      (println opts))))
+      (set-infos opts))))
