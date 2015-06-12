@@ -3,21 +3,6 @@
   (require [clojure.tools.cli :refer [cli]]
            [postal.core :refer [send-message]]))
 
-(import org.apache.commons.mail.SimpleEmail)
-
-
-(defn email-sender [email-to name email-address account-password message-subject message-body]
-  (doto (SimpleEmail.)
-    (.setHostName "smtp.gmail.com")
-    (.setSslSmtpPort "465")
-    (.setSSL true)
-    (.addTo email-to)
-    (.setFrom email-address name)
-    (.setSubject message-subject)
-    (.setMsg message-body)
-    (.setAuthentication email-address account-password)
-    (.send)))
-
 (defn set-infos
   "Set all the informations that were given through command line"
   [opts]
@@ -33,19 +18,12 @@
               :user email-address
               :pass account-password}]
 
-
-    ; (loop [emails list-of-emails]
-    ; (when (not (empty? emails))
-    ;(email-sender (second (first emails)) name email-address account-password message-subject message-body)
-    ; (recur (rest emails))
-    ;)
-    ;)
     ;(dorun (map #(email-sender (second %) name email-address account-password message-subject message-body) list-of-emails))
     (mapv #(send-message conn {:from email-address
                                :to (second %)
                                :subject message-subject
-                               :body message-body
-                               :user-agent name}) list-of-emails)
+                               :body message-body}
+                               ) list-of-emails)
     )
   )
 
