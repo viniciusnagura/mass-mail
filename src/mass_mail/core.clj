@@ -3,7 +3,7 @@
   (require [clojure.tools.cli :refer [cli]]
            [postal.core :refer [send-message]]))
 
-(defn set-infos
+(defn send-email
   "Set all the informations that were given through command line"
   [opts]
   (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
@@ -27,6 +27,29 @@
     )
   )
 
+(defn send-email-from-repl
+  "Set all the informations that were given through command line"
+  [file name email password subject body]
+  (let [list-of-emails (->> (clojure.string/split (slurp file) #"\n")
+                            (map #(clojure.string/split % #":")))
+        name name
+        email-address email
+        account-password password
+        message-subject subject
+        message-body body
+        conn {:host "smtp.gmail.com"
+              :ssl true
+              :user email-address
+              :pass account-password}]
+
+    (mapv #(send-message conn {:from email-address
+                               :to (second %)
+                               :subject message-subject
+                               :body message-body
+                               :user-agent name}) list-of-emails)
+    )
+  )
+
 (defn -main
   "Read the list of email addresses and set the email informations"
   [& args]
@@ -45,4 +68,4 @@
           (:password opts)
           (:subject opts)
           (:body opts))
-      (set-infos opts))))
+      (send-email opts))))
