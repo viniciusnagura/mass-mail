@@ -20,19 +20,20 @@
   "Set all the informations that were given through command line"
   [opts]
   (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
-           (map #(clojure.string/split % #":")))
+                            (map #(clojure.string/split % #":")))
         name (get opts :name)
         email-address (get opts :email)
         account-password (get opts :password)
         message-subject (get opts :subject)
         message-body (get opts :body)]
 
-    (loop [emails list-of-emails]
-      (when (not (empty? emails))
-        (email-sender (second (first emails)) name email-address account-password message-subject message-body)
-        (recur (rest emails))
-        )
-      )
+    ; (loop [emails list-of-emails]
+    ; (when (not (empty? emails))
+    ;(email-sender (second (first emails)) name email-address account-password message-subject message-body)
+    ; (recur (rest emails))
+    ;)
+    ;)
+    (mapv #(email-sender (second %) name email-address account-password message-subject message-body) list-of-emails)
     )
   )
 
