@@ -1,6 +1,8 @@
 (ns mass-mail.core
   (:gen-class)
-  (require [clojure.tools.cli :refer [cli]]))
+  (require [clojure.tools.cli :refer [cli]]
+           [postal.core :refer [send-message]]))
+
 (import org.apache.commons.mail.SimpleEmail)
 
 
@@ -25,7 +27,12 @@
         email-address (get opts :email)
         account-password (get opts :password)
         message-subject (get opts :subject)
-        message-body (get opts :body)]
+        message-body (get opts :body)
+        conn {:host "smtp.gmail.com"
+              :ssl true
+              :user email-address
+              :pass account-password}]
+
 
     ; (loop [emails list-of-emails]
     ; (when (not (empty? emails))
@@ -33,7 +40,12 @@
     ; (recur (rest emails))
     ;)
     ;)
-    (mapv #(email-sender (second %) name email-address account-password message-subject message-body) list-of-emails)
+    ;(dorun (map #(email-sender (second %) name email-address account-password message-subject message-body) list-of-emails))
+    (mapv #(send-message conn {:from email-address
+                               :to (second %)
+                               :subject message-subject
+                               :body message-body
+                               :user-agent name}) list-of-emails)
     )
   )
 
