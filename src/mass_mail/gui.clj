@@ -7,7 +7,7 @@
 (use 'seesaw.chooser)
 
 
-(def open-action
+(def search-action
   (seesaw/button
     :text "Search file..."
     :size [150 :by 50]))
@@ -24,8 +24,8 @@
     :size [150 :by 50]))
 
 (def two-widgets
-  (let [message file-field search-file open-action]
-    (seesaw/config! open-action :listen [:action (fn [e] (if-let [f (choose-file)]
+  (let [message file-field search-file search-action]
+    (seesaw/config! search-action :listen [:action (fn [e] (if-let [f (choose-file)]
                                                            (do
                                                              (seesaw/config! file-field :text (str f))
                                                              (seesaw/config! content-field :text f)
