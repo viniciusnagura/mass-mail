@@ -5,7 +5,7 @@
   (:require [seesaw.core :as seesaw]))
 (use 'seesaw.core)
 (use 'seesaw.chooser)
-
+(use mass-mail.core :as core)
 
 (def search-action
   (seesaw/button
@@ -48,7 +48,9 @@
 (def send-button
   (seesaw/button
     :text "Send email"
-    :size [150 :by 50] :listen [:action (fn [e] (do (seesaw/config! name-field :text (seesaw/value content-field)))
+    :size [150 :by 50] :listen [:action (fn [e] (do (core/send-email [(seesaw/value file-field) (seesaw/value name-field)
+                                                       (seesaw/value email-field) (seesaw/value password-field)
+                                                       (seesaw/value subject-field) (seesaw/value content-field)]))
                                                     )]))
 
 (def content-send-fields
