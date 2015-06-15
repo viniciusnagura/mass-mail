@@ -1,11 +1,11 @@
-name,email,city,send
-Alexis,aheijmeijer@uol.com.br,San Diego,yes
-Vinicius,vnagura@oswego.edu,San Diego,yes
-Leonardo,nardoasafonso@gmail.com,San Diego,yes
-Allan,allandoamaral@gmail.com,San Diego,yes
-Clojure tester,clojure.research@gmail.com,San Diego,no
-Francisco,,San Francisco,yes
-,clojure.research@gmail.com,San Diego,yes
-Obama,obamabarack@us.gov,Washington,yes
-Hillary Clinton,hillary.clinton@us.gov,New York,
-SDSU,sdsu@sdsu.edu,,yes
+name,email,city
+Alexis,aheijmeijer@uol.com.br,San Diego
+Vinicius,vnagura@oswego.edu,San Diego
+Leonardo,nardoasafonso@gmail.com,San Diego
+Allan,allandoamaral@gmail.com,San Diego
+Clojure tester,clojure.research@gmail.com,San Diego
+Francisco,,San Francisco
+,clojure.research@gmail.com,San Diego
+Obama,obamabarack@us.gov,Washington
+Hillary Clinton,hillary.clinton@us.gov,New York
+SDSU,sdsu@sdsu.edu,
