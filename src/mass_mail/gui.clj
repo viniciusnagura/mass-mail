@@ -2,10 +2,14 @@
   (:gen-class :main true)
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
-  (:require [seesaw.core :as seesaw]))
+  (:require [seesaw.core :as seesaw])
+  (require [clojure.tools.cli :refer [cli]]
+    [postal.core :refer [send-message]]
+    [mass-mail.core :refer [send-email]]))
+
+
 (use 'seesaw.core)
 (use 'seesaw.chooser)
-(use mass-mail.core :as core)
 
 (def search-action
   (seesaw/button
@@ -48,7 +52,7 @@
 (def send-button
   (seesaw/button
     :text "Send email"
-    :size [150 :by 50] :listen [:action (fn [e] (do (core/send-email [(seesaw/value file-field) (seesaw/value name-field)
+    :size [150 :by 50] :listen [:action (fn [e] (do (send-email [(seesaw/value file-field) (seesaw/value name-field)
                                                        (seesaw/value email-field) (seesaw/value password-field)
                                                        (seesaw/value subject-field) (seesaw/value content-field)]))
                                                     )]))
@@ -62,7 +66,6 @@
     (seesaw/config! search-action :listen [:action (fn [e] (if-let [f (choose-file)]
                                                            (do
                                                              (seesaw/config! file-field :text (str f))
-                                                             (seesaw/config! content-field :text f)
                                                              )))])
     (seesaw/left-right-split message search-file)
     ))
@@ -84,4 +87,3 @@
 (defn -main [& args]
   (display (three-widgets))
   )
-
