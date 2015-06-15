@@ -20,7 +20,7 @@
   (seesaw/text :text "Email" :columns 30))
 
 (def password-field
-  (seesaw/text :text "Password" :columns 20))
+  (seesaw/password :text "Password" :columns 20))
 
 (def login-fields
   (let [part-one email-field
@@ -49,9 +49,9 @@
 (def send-button
   (seesaw/button
     :text "Send email"
-    :size [150 :by 50] :listen [:action (fn [e] (do (send-email (seesaw/value file-field) (seesaw/value name-field)
-                                                       (seesaw/value email-field) (seesaw/value password-field)
-                                                       (seesaw/value subject-field) (seesaw/value content-field)))
+    :size [150 :by 50] :listen [:action (fn [e] (do (send-email (seesaw/value file-field)(seesaw/value email-field)
+                                                                (seesaw/value password-field)
+                                                                (seesaw/value subject-field) (seesaw/value content-field)))
                                                     )]))
 
 (def content-send-fields
