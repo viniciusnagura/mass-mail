@@ -5,7 +5,6 @@
   (:require [seesaw.core :as seesaw])
   (require [mass-mail.core :refer [send-email]]))
 
-
 (use 'seesaw.core)
 (use 'seesaw.chooser)
 
