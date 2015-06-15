@@ -29,7 +29,8 @@
   (seesaw/text :text "Password" :columns 20))
 
 (def login-fields
-  (let [part-one email-field part-two password-field]
+  (let [part-one email-field
+        part-two password-field]
     (seesaw/top-bottom-split part-one part-two)))
 
 (def name-field
@@ -39,11 +40,13 @@
   (seesaw/text :text "Subject" :columns 20))
 
 (def name-subject-fields
-  (let [part-one name-field part-two subject-field]
+  (let [part-one name-field
+        part-two subject-field]
     (seesaw/top-bottom-split part-one part-two)))
 
 (def subject-login-fields
-  (let [part-one name-subject-fields part-two login-fields]
+  (let [part-one name-subject-fields
+        part-two login-fields]
     (seesaw/left-right-split part-one part-two)))
 
 (def content-field
@@ -58,11 +61,13 @@
                                                     )]))
 
 (def content-send-fields
-  (let [part-one content-field part-two send-button]
+  (let [part-one content-field
+        part-two send-button]
     (seesaw/top-bottom-split part-one part-two)))
 
 (def search-area
-  (let [message file-field search-file search-action]
+  (let [message file-field
+        search-file search-action]
     (seesaw/config! search-action :listen [:action (fn [e] (if-let [f (choose-file)]
                                                            (do
                                                              (seesaw/config! file-field :text (str f))
@@ -71,11 +76,13 @@
     ))
 
 (def two-widgets
-  (let [part-one search-area part-two subject-login-fields]
+  (let [part-one search-area
+        part-two subject-login-fields]
     (seesaw/top-bottom-split part-one part-two)))
 
 (defn three-widgets []
-  (let [part-one two-widgets part-two content-send-fields]
+  (let [part-one two-widgets
+        part-two content-send-fields]
     (seesaw/top-bottom-split part-one part-two)))
 
 (defn display
