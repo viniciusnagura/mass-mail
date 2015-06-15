@@ -3,9 +3,7 @@
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
   (:require [seesaw.core :as seesaw])
-  (require [clojure.tools.cli :refer [cli]]
-           [postal.core :refer [send-message]]
-           [mass-mail.core :refer [send-email]]))
+  (require [mass-mail.core :refer [send-email]]))
 
 
 (use 'seesaw.core)
@@ -18,9 +16,6 @@
 
 (def file-field
   (seesaw/text :text "Choose the file with the list of email addresses" :columns 40 :editable? false))
-
-(def name-field
-  (seesaw/text :text "Name" :columns 40))
 
 (def email-field
   (seesaw/text :text "Email" :columns 30))
