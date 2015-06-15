@@ -17,6 +17,18 @@
     )
   )
 
+(defn warnings
+  [list]
+  (filter #(if (or (= (get % :name) "") (= (get % :city) ""))
+            true
+            false) list))
+
+(defn errors
+  [list]
+  (filter #(if (or (not (is-email? (get % :email))) (= (get % :email) ""))
+            true
+            false) list))
+
 (defn read-file
   [file]
   (let [output (with-open [in-file (io/reader file)]
