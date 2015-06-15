@@ -80,7 +80,7 @@
 
 (defn display
   [content]
-  (let [window (seesaw/frame :title "Mass Email")]
+  (let [window (seesaw/frame :title "Mass Email" :on-close :exit)]
     (-> window
       (seesaw/config! :content content) (seesaw/pack!) (seesaw/show!))))
 
