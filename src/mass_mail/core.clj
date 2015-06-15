@@ -6,6 +6,15 @@
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]))
 
+(defn is-email?
+  [email]
+  (let [regex (re-matches #"(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?" email)]
+    (if (= regex email)
+      true
+      false)
+    )
+  )
+
 (defn read-file
   [file]
   (let [output (with-open [in-file (io/reader file)]
