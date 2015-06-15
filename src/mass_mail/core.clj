@@ -5,49 +5,25 @@
 
 (defn send-email
   "Set all the informations that were given through command line"
-  [opts]
-  (let [list-of-emails (->> (clojure.string/split (slurp (get opts :file)) #"\n")
-                            (map #(clojure.string/split % #":")))
-        name (get opts :name)
-        email-address (get opts :email)
-        account-password (get opts :password)
-        message-subject (get opts :subject)
-        message-body (get opts :body)
-        conn {:host "smtp.gmail.com"
-              :ssl true
-              :user email-address
-              :pass account-password}]
+  ([opts]
+    (let [{file :file name :name email :email password :password subject :subject body :body}
+          opts]
+      (send-email file name email password subject body)))
 
-    ;(dorun (map #(email-sender (second %) name email-address account-password message-subject message-body) list-of-emails))
-    (mapv #(send-message conn {:from email-address
-                               :to (second %)
-                               :subject message-subject
-                               :body message-body}
-                               ) list-of-emails)
-    )
-  )
-
-(defn send-email-from-repl
-  "Set all the informations that were given through command line"
-  [file name email password subject body]
+  ([file name email password subject body]
   (let [list-of-emails (->> (clojure.string/split (slurp file) #"\n")
                             (map #(clojure.string/split % #":")))
-        name name
-        email-address email
-        account-password password
-        message-subject subject
-        message-body body
+
         conn {:host "smtp.gmail.com"
               :ssl true
-              :user email-address
-              :pass account-password}]
+              :user email
+              :pass password}]
 
-    (mapv #(send-message conn {:from email-address
+    (mapv #(send-message conn {:from email
                                :to (second %)
-                               :subject message-subject
-                               :body message-body
-                               :user-agent name}) list-of-emails)
-    )
+                               :subject subject
+                               :body body}) list-of-emails)
+    ))
   )
 
 (defn -main
