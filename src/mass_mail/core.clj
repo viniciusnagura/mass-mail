@@ -11,8 +11,8 @@
   (let [output (with-open [in-file (io/reader file)]
                (->>
                  (csv/parse-csv in-file)
-                 mappify
                  remove-comments
+                 mappify
                  doall))]
     output
     )
@@ -44,7 +44,7 @@
   ([opts]
     (let [{file :file name :name email :email password :password subject :subject body :body}
           opts]
-      (send-email file name email password subject body)))
+      (send-email-original file name email password subject body)))
 
   ([file name email password subject body]
   (let [list-of-emails (->> (clojure.string/split (slurp file) #"\n")
