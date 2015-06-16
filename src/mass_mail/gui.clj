@@ -9,6 +9,11 @@
 (use 'seesaw.core)
 (use 'seesaw.chooser)
 
+(defn clean-text
+  [widget]
+  (seesaw/text! widget "")
+  )
+
 (def file-field
   (seesaw/text :text "Choose the file" :columns 30 :editable? false))
 
@@ -21,19 +26,19 @@
                                                     )))]))
 
 (def email-field
-  (seesaw/text :text "Email" :columns 30))
+  (seesaw/text :text "Email" :columns 30 :listen [:focus-gained (fn [e] (seesaw/text! email-field ""))]))
 
 (def password-field
-  (seesaw/password :text "password" :echo-char \* :columns 20))
+  (seesaw/password :text "password" :echo-char \* :columns 20 :listen [:focus-gained (fn [e] (seesaw/text! password-field ""))]))
 
 (def name-field
-  (seesaw/text :text "Name" :columns 20))
+  (seesaw/text :text "Name" :columns 20 :listen [:focus-gained (fn [e] (seesaw/text! name-field ""))]))
 
 (def subject-field
-  (seesaw/text :text "Subject" :columns 20))
+  (seesaw/text :text "Subject" :columns 20 :listen [:focus-gained (fn [e] (seesaw/text! subject-field ""))]))
 
 (def content-field
-  (seesaw/text :text "Content of the email" :multi-line? true :columns 60 :rows 10))
+  (seesaw/text :text "Content of the email" :multi-line? true :columns 60 :rows 10 :listen [:focus-gained (fn [e] (seesaw/text! content-field ""))]))
 
 (def send-button
   (seesaw/button
@@ -57,15 +62,17 @@
 (def grid-credentials (seesaw/grid-panel
                  :border "Credentials"
                  :columns 2
-                 :items [email-field password-field]))
+                 :items ["E-mail:" "Password:"
+                         email-field password-field]))
 
 (def grid-header (seesaw/grid-panel
                  :border "Email header"
                  :columns 2
-                 :items [name-field subject-field]))
+                 :items ["Name:" "Subject:"
+                         name-field subject-field]))
 
 (def grid-body (seesaw/grid-panel
-                 :border "E-mail"
+                 :border "E-mail body"
                  :columns 1
                  :items [content-field]))
 
