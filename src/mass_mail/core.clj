@@ -6,7 +6,7 @@
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]))
 
-(defn is-email?Aa
+(defn is-email?
   [email]
   (let [regex (re-matches #"(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?" email)]
     (if (= regex email)
@@ -56,29 +56,6 @@
                                 :subject subject
                                 :body body}) dest)
      ))
-  )
-
-(defn send-email-original
-  "Set all the informations that were given through command line"
-  ([opts]
-    (let [{file :file name :name email :email password :password subject :subject body :body}
-          opts]
-      (send-email-original file name email password subject body)))
-
-  ([file name email password subject body]
-  (let [list-of-emails (->> (clojure.string/split (slurp file) #"\n")
-                            (map #(clojure.string/split % #":")))
-
-        conn {:host "smtp.gmail.com"
-              :ssl true
-              :user email
-              :pass password}]
-
-    (mapv #(send-message conn {:from email
-                               :to (second %)
-                               :subject subject
-                               :body body}) list-of-emails)
-    ))
   )
 
 (defn -main
