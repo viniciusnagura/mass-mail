@@ -15,10 +15,10 @@
   (seesaw/text :text "/" :columns 30 :editable? false))
 
 (def email-field
-  (seesaw/text :columns 30))
+  (seesaw/text :text "clojure.research@gmail.com" :columns 30))
 
 (def password-field
-  (seesaw/password :echo-char \* :columns 20))
+  (seesaw/password :text "clojure123" :echo-char \* :columns 20))
 
 (def name-field
   (seesaw/text :columns 20))
