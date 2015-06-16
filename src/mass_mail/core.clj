@@ -6,7 +6,7 @@
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]))
 
-(defn is-email?
+(defn is-email?Aa
   [email]
   (let [regex (re-matches #"(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?" email)]
     (if (= regex email)
@@ -17,15 +17,13 @@
 
 (defn warnings
   [list]
-  (filter #(if (or (= (get % :name) "") (= (get % :city) ""))
-            true
-            false) list))
+  (keep-indexed #(if (or (= (get %2 :name) "") (= (get %2 :city) ""))
+            (+ 2 %1)) list))
 
 (defn errors
   [list]
-  (filter #(if (or (not (is-email? (get % :email))) (= (get % :email) ""))
-            true
-            false) list))
+  (keep-indexed #(if (or (not (is-email? (get %2 :email))) (= (get %2 :email) ""))
+            (+ 2 %1)) list))
 
 (defn read-file
   [file]
