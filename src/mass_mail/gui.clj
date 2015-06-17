@@ -29,13 +29,20 @@
 (def content-field
   (seesaw/text :multi-line? true :columns 60 :rows 10))
 
+(def bar
+  (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :size [80 :by 25]))
+
+
 (def send-button
   (seesaw/button
     :text "Send"
     :enabled? false
-    :size [150 :by 50] :listen [:action (fn [e] (do (send-email (seesaw/value file-field) (seesaw/value email-field)
-                                                                (seesaw/value password-field)
-                                                                (seesaw/value subject-field) (seesaw/value content-field)))
+    :size [150 :by 50] :listen [:action (fn [e] (do
+                                                  (config! bar :value 0 :max (count (read-file (seesaw/value file-field))))
+                                                  (send-email (seesaw/value file-field) (seesaw/value email-field)
+                                                                         (seesaw/value password-field)
+                                                                         (seesaw/value subject-field) (seesaw/value content-field))
+                                                  (config! bar :value (+ (seesaw/value bar) 1)))
                                           )]))
 
 (def config-test
@@ -116,7 +123,7 @@
 (def grid-body (seesaw/grid-panel
                  :border "E-mail body"
                  :columns 1
-                 :items [content-field]))
+                 :items [content-field bar]))
 
 (def panel
   (mig-panel

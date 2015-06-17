@@ -4,7 +4,11 @@
            [postal.core :refer [send-message]]
            [semantic-csv.core :refer :all]
            [clojure-csv.core :as csv]
-           [clojure.java.io :as io]))
+           [clojure.java.io :as io]
+          [taoensso.timbre :as timbre
+     :refer (log  trace  debug  info  warn  error  fatal  report
+              logf tracef debugf infof warnf errorf fatalf reportf
+              spy)]))
 
 (defn is-email?
   [email]
@@ -51,10 +55,20 @@
                :user email
                :pass password}]
 
-     (mapv #(send-message conn {:from email
-                                :to (get % :email)
-                                :subject subject
-                                :body body}) dest)
+     (mapv (fn[x]
+             (do
+               (try
+                 (info "Sending email to:" (str (val (first x))))
+                 (if (nil? (send-message conn {:from email
+                                               :to (get x :email)
+                                               :subject subject
+                                               :body body}))
+                   (info "Failed to send email to:" (str (val (first x))))
+                   (info "Email sent to:" (str (val (first x)))))
+                 (catch Exception e
+                   (error "Failed to send email to:" (str (val (first x))) "Error" (str e)))
+                 )
+               )) dest)
      ))
   )
 
