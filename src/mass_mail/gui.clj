@@ -3,13 +3,21 @@
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
   (:require [seesaw.core :as seesaw])
-  (require [mass-mail.core :refer [send-email warnings read-file errors ]]))
+  (require [mass-mail.core :refer :all]))
 
 (use 'seesaw.mig)
 (use 'seesaw.core)
 (use 'seesaw.chooser)
 
 (def test-mode-file (atom "emails-test.csv"))
+
+(def bar
+  (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :paint-string? true :size [80 :by 25]))
+
+(add-watch progress :prog
+           (fn [k r old-value new-value]
+             (seesaw/config! bar :value new-value))
+           )
 
 (def file-field
   (seesaw/text :text "/" :columns 30 :editable? false))
@@ -29,20 +37,17 @@
 (def content-field
   (seesaw/text :multi-line? true :columns 60 :rows 10))
 
-(def bar
-  (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :size [80 :by 25]))
-
-
 (def send-button
   (seesaw/button
     :text "Send"
     :enabled? false
     :size [150 :by 50] :listen [:action (fn [e] (do
-                                                  (config! bar :value 0 :max (count (read-file (seesaw/value file-field))))
+                                                  (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
                                                   (send-email (seesaw/value file-field) (seesaw/value email-field)
                                                                          (seesaw/value password-field)
-                                                                         (seesaw/value subject-field) (seesaw/value content-field))
-                                                  (config! bar :value (+ (seesaw/value bar) 1)))
+                                                                         (seesaw/value subject-field) (seesaw/value content-field)
+                                                              )
+                                                  )
                                           )]))
 
 (def config-test
@@ -123,7 +128,8 @@
 (def grid-body (seesaw/grid-panel
                  :border "E-mail body"
                  :columns 1
-                 :items [content-field bar]))
+                 :items [content-field
+                         bar]))
 
 (def panel
   (mig-panel

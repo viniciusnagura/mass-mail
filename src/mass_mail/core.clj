@@ -5,10 +5,14 @@
            [semantic-csv.core :refer :all]
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]
-          [taoensso.timbre :as timbre
-     :refer (log  trace  debug  info  warn  error  fatal  report
-              logf tracef debugf infof warnf errorf fatalf reportf
-              spy)]))
+           [taoensso.timbre :as timbre
+            :refer (log trace debug info warn error fatal report
+                        logf tracef debugf infof warnf errorf fatalf reportf
+                        spy)]
+           [seesaw.core :as seesaw])
+  )
+
+(def progress (atom 0))
 
 (defn is-email?
   [email]
@@ -53,10 +57,12 @@
          conn {:host "smtp.gmail.com"
                :ssl true
                :user email
-               :pass password}]
+               :pass password}
+         ]
 
      (mapv (fn[x]
              (do
+               (reset! progress (inc @progress))
                (try
                  (info "Sending email to:" (str (val (first x))))
                  (if (nil? (send-message conn {:from email
@@ -70,9 +76,11 @@
                  )
                )) dest)
      ))
+
   )
 
-(defn -main
+
+(comment (defn -main
   "Read the list of email addresses and set the email informations"
   [& args]
   (let [[opts args banner]
@@ -88,4 +96,4 @@
           (:password opts)
           (:subject opts)
           (:body opts))
-      (send-email opts))))
+      (send-email opts)))))
