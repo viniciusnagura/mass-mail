@@ -8,7 +8,9 @@
                  [com.draines/postal "1.11.3"]
                  [seesaw "1.4.4"]
                  [semantic-csv "0.1.0"]
-                 [com.taoensso/timbre "2.7.1"]]
+                 [com.taoensso/timbre "2.7.1"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [selmer "0.8.2"]]
   :main ^:skip-aot mass-mail.gui
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

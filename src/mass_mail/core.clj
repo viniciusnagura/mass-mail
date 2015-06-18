@@ -9,7 +9,8 @@
             :refer (log trace debug info warn error fatal report
                         logf tracef debugf infof warnf errorf fatalf reportf
                         spy)]
-           [seesaw.core :as seesaw])
+           [selmer.parser :as selmer]
+           )
   )
 
 (def progress (atom 0))
@@ -20,6 +21,16 @@
     (if (= regex email)
       true
       false)
+    )
+  )
+
+(defn is-csv?
+  [file]
+  (let [ext "csv"]
+    (if (.endsWith file ext)
+      true
+      false
+      )
     )
   )
 
@@ -50,35 +61,35 @@
   ([opts]
    (let [{file :file email :email password :password subject :subject body :body}
          opts]
-     (send-email file email password subject body)))
+     (send-email file email password subject body "name")))
 
-  ([file email password subject body]
+  ([file email password subject body sender-name]
    (let [dest (read-file file)
          conn {:host "smtp.gmail.com"
                :ssl true
                :user email
-               :pass password}
-         ]
+               :pass password}]
 
      (mapv (fn[x]
              (do
-               (reset! progress (inc @progress))
                (try
                  (info "Sending email to:" (str (val (first x))))
                  (if (nil? (send-message conn {:from email
                                                :to (get x :email)
                                                :subject subject
-                                               :body body}))
+                                               :body (selmer/render "Hello, {{name}} \n\n {{body}} \n\n Bests, \n {{sender-name}}"
+                                                                    {:name (get x :name) :body body :sender-name sender-name})} ))
                    (info "Failed to send email to:" (str (val (first x))))
                    (info "Email sent to:" (str (val (first x)))))
                  (catch Exception e
                    (error "Failed to send email to:" (str (val (first x))) "Error" (str e)))
                  )
+               (reset! progress (inc @progress))
                )) dest)
+
      ))
 
   )
-
 
 (comment (defn -main
   "Read the list of email addresses and set the email informations"

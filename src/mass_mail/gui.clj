@@ -3,7 +3,8 @@
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
   (:require [seesaw.core :as seesaw])
-  (require [mass-mail.core :refer :all]))
+  (require [mass-mail.core :refer :all])
+  )
 
 (use 'seesaw.mig)
 (use 'seesaw.core)
@@ -16,7 +17,8 @@
 
 (add-watch progress :prog
            (fn [k r old-value new-value]
-             (seesaw/config! bar :value new-value))
+             (seesaw/config! bar :value new-value)
+             (println (str "watch: " @progress)))
            )
 
 (def file-field
@@ -43,10 +45,15 @@
     :enabled? false
     :size [150 :by 50] :listen [:action (fn [e] (do
                                                   (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
-                                                  (send-email (seesaw/value file-field) (seesaw/value email-field)
-                                                                         (seesaw/value password-field)
-                                                                         (seesaw/value subject-field) (seesaw/value content-field)
+                                                  (reset! progress 0)
+                                                  (seesaw/config! send-button :enabled? false)
+                                                  (future
+                                                    (send-email (seesaw/value file-field) (seesaw/value email-field)
+                                                              (seesaw/value password-field)
+                                                              (seesaw/value subject-field) (seesaw/value content-field)
+                                                              (seesaw/value name-field)
                                                               )
+                                                          (seesaw/config! send-button :enabled? true))
                                                   )
                                           )]))
 
@@ -80,18 +87,24 @@
     :listen [:action (fn [e] (if-let [f (choose-file :filters [["CSV File" ["csv"] (constantly true)]
                                                                ["Folders" #(.isDirectory %)]
                                                                ])]
-                                                 (do
-                                                   (seesaw/config! file-field :text (str f))
-                                                   (if (not (empty? (errors (read-file f))))
-                                                     (do (alert (str "There are erros in the lines: " (apply str (interpose ", " (errors (read-file f)))) ".\n Go back and fix it before continue."))
-                                                         (seesaw/config! send-button :enabled? false)
-                                                     )
-                                                     (if (not (empty? (warnings (read-file f))))
-                                                       (do (alert (str "There are warnings in the lines: " (apply str (interpose ", " (warnings (read-file f)))) ".\n You can continue at your own risk."))
-                                                           (seesaw/config! send-button :enabled? true)
-                                                       )
-                                                       (seesaw/config! send-button :enabled? true)
-                                                       )))))]))
+                                                 (if (is-csv? (str f))
+                                                   (do
+                                                     (seesaw/config! file-field :text (str f))
+                                                     (if (not (empty? (errors (read-file f))))
+                                                       (do (alert (str "There are erros in the lines: " (apply str (interpose ", " (errors (read-file f)))) ".\n Go back and fix it before continue."))
+                                                           (seesaw/config! send-button :enabled? false)
+                                                           )
+                                                       (if (not (empty? (warnings (read-file f))))
+                                                         (do (alert (str "There are warnings in the lines: " (apply str (interpose ", " (warnings (read-file f)))) ".\n You can continue at your own risk."))
+                                                             (seesaw/config! send-button :enabled? true)
+                                                             )
+                                                         (seesaw/config! send-button :enabled? true)
+                                                         )))
+                                                   (do
+                                                     (alert "Choose a CSV (Comma-separated values) file.")
+                                                     (seesaw/config! file-field :text "/")
+                                                   )
+                                                   )))]))
 
 (def check-test-mode (seesaw/checkbox
                        :text "Test mode"
