@@ -64,8 +64,8 @@
 
 (defn create-body
   [dest]
-  (selmer/render "Hello, {{name}} \n\n {{body}} \n\n Bests, \n {{sender-name}}"
-                 {:name dest :body @body :sender-name @sender-name})
+  (selmer/render "Hello {{name}}, \n\n {{body}} \n\n Bests, \n {{sender-name}}"
+                 {:name (:name dest) :body @body :sender-name @sender-name})
 )
 
 (defn create-message
@@ -95,6 +95,7 @@
   (info "Sending to:" (get dest :email))
   (let [result (send-email-private dest)]
     (info "Sent: " result)
+    (reset! progress (inc @progress))
     result)
 )
 
