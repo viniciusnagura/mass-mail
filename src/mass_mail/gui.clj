@@ -11,14 +11,14 @@
 (use 'seesaw.chooser)
 
 (def test-mode-file (atom "emails-test.csv"))
+(def ^:dynamic *test* true)
 
 (def bar
   (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :paint-string? true :size [80 :by 25]))
 
 (add-watch progress :prog
            (fn [k r old-value new-value]
-             (seesaw/config! bar :value new-value)
-             (println (str "watch: " @progress)))
+             (seesaw/config! bar :value new-value))
            )
 
 (def file-field
@@ -47,15 +47,22 @@
                                                   (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
                                                   (reset! progress 0)
                                                   (seesaw/config! send-button :enabled? false)
+                                                  (reset! email (seesaw/value email-field))
+                                                  (reset! pass (seesaw/value password-field))
+                                                  (reset! subject (seesaw/value subject-field))
+                                                  (reset! body (seesaw/value content-field))
+                                                  (reset! sender-name (seesaw/value name-field))
                                                   (future
-                                                    (send-email (seesaw/value file-field) (seesaw/value email-field)
-                                                              (seesaw/value password-field)
-                                                              (seesaw/value subject-field) (seesaw/value content-field)
-                                                              (seesaw/value name-field)
-                                                              )
+                                                    (log-results (seesaw/value file-field))
                                                           (seesaw/config! send-button :enabled? true))
                                                   )
                                           )]))
+
+(comment (send-email (seesaw/value file-field) (seesaw/value email-field)
+                     (seesaw/value password-field)
+                     (seesaw/value subject-field) (seesaw/value content-field)
+                     (seesaw/value name-field)
+                     ))
 
 (def config-test
   (menu-item
@@ -103,21 +110,30 @@
                                                    (do
                                                      (alert "Choose a CSV (Comma-separated values) file.")
                                                      (seesaw/config! file-field :text "/")
+                                                     (seesaw/config! send-button :enabled? false)
                                                    )
                                                    )))]))
+
+(defn testing!
+  [yes-no]
+  (alter-var-root (var *test*) (fn [_] yes-no))
+  (if *test*
+    (do
+      (seesaw/config! search-action :enabled? false)
+      (seesaw/config! file-field :text @test-mode-file)
+      (seesaw/config! send-button :enabled? true))
+    (do
+      (seesaw/config! search-action :enabled? true)
+      (seesaw/config! file-field :text "/")
+      (seesaw/config! send-button :enabled? false)))
+  )
 
 (def check-test-mode (seesaw/checkbox
                        :text "Test mode"
                        :selected? false
-                       :listen [:action (fn [e] (if (seesaw/config check-test-mode :selected?)
-                                                  (do
-                                                    (seesaw/config! search-action :enabled? false)
-                                                    (seesaw/config! file-field :text @test-mode-file)
-                                                    (seesaw/config! send-button :enabled? true))
-                                                  (do
-                                                    (seesaw/config! search-action :enabled? true)
-                                                    (seesaw/config! file-field :text "/")
-                                                    (seesaw/config! send-button :enabled? false))))]
+                       :listen [:action (fn [e] (do
+                                                  (testing! (seesaw/config check-test-mode :selected?))
+                                                  ))]
                        )
   )
 

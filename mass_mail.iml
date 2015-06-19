@@ -21,6 +21,7 @@
     <orderEntry type="library" name="Leiningen: org.clojure/tools.cli:0.3.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.nrepl:0.2.6" level="project" />
     <orderEntry type="library" name="Leiningen: seesaw:1.4.4" level="project" />
+    <orderEntry type="library" name="Leiningen: selmer:0.8.2" level="project" />
     <orderEntry type="library" name="Leiningen: semantic-csv:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: commons-codec:1.9" level="project" />
     <orderEntry type="library" name="Leiningen: javax.mail/mail:1.4.4" level="project" />
@@ -42,6 +43,12 @@
     <orderEntry type="library" name="Leiningen: org.swinglabs.swingx/swingx-painters:1.6.3" level="project" />
     <orderEntry type="library" name="Leiningen: org.swinglabs.swingx/swingx-plaf:1.6.3" level="project" />
     <orderEntry type="library" name="Leiningen: org.swinglabs.swingx/swingx-common:1.6.3" level="project" />
+    <orderEntry type="library" name="Leiningen: cheshire:5.4.0" level="project" />
+    <orderEntry type="library" name="Leiningen: joda-time:2.7" level="project" />
+    <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.core/jackson-core:2.4.4" level="project" />
+    <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.dataformat/jackson-dataformat-cbor:2.4.4" level="project" />
+    <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.dataformat/jackson-dataformat-smile:2.4.4" level="project" />
+    <orderEntry type="library" name="Leiningen: tigris:0.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-csv:2.0.1" level="project" />
   </component>
 </module>
