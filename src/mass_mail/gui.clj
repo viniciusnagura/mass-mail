@@ -1,5 +1,5 @@
 (ns mass-mail.gui
-  (:gen-class :main true)
+  (:gen-class)
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
   (:require [seesaw.core :as seesaw])
@@ -10,8 +10,9 @@
 (use 'seesaw.core)
 (use 'seesaw.chooser)
 
+(declare check-test-mode)
+
 (def test-mode-file (atom "emails-test.csv"))
-(def ^:dynamic *test* true)
 
 (def bar
   (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :paint-string? true :size [80 :by 25]))
@@ -47,92 +48,125 @@
                                                   (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
                                                   (reset! progress 0)
                                                   (seesaw/config! send-button :enabled? false)
+                                                  (seesaw/config! check-test-mode :enabled? false)
+
                                                   (reset! email (seesaw/value email-field))
                                                   (reset! pass (seesaw/value password-field))
                                                   (reset! subject (seesaw/value subject-field))
                                                   (reset! body (seesaw/value content-field))
                                                   (reset! sender-name (seesaw/value name-field))
+
                                                   (future
                                                     (log-results (seesaw/value file-field))
-                                                          (seesaw/config! send-button :enabled? true))
+                                                    (seesaw/config! send-button :enabled? true)
+                                                    (seesaw/config! check-test-mode :enabled? true))
                                                   )
                                           )]))
 
-(comment (send-email (seesaw/value file-field) (seesaw/value email-field)
-                     (seesaw/value password-field)
-                     (seesaw/value subject-field) (seesaw/value content-field)
-                     (seesaw/value name-field)
-                     ))
-
-(def config-test
-  (menu-item
-    :text "Change emails test file"
-    :listen [:action (fn [e] (if-let [f (choose-file :filters [["CSV File" ["csv"] (constantly true)]
-                                                               ["Folders" #(.isDirectory %)]
-                                                               ])]
-                               (do
-                                 (reset! test-mode-file (str f))
-                                 )))])
+(defn show-alert-error
+  [file-instance]
+  (alert (str "There are erros in the lines: " (apply str (interpose ", " (errors (read-file file-instance))))
+              ".\n Go back and fix it before continue."))
+  (seesaw/config! send-button :enabled? false)
 )
 
-(defn display
-  [content]
-  (let [window (seesaw/frame :title "Mass Email" :on-close :exit
-                             )]
-    (-> window
-        (seesaw/config! :content content
-                        :menubar
-                        (menubar :items
-                                 [(menu :text "Configs" :items [config-test])
-                                  ])) (seesaw/pack!) (seesaw/show!))))
+(defn show-alert-warning
+  [file-instance]
+  (alert (str "There are warnings in the lines: " (apply str (interpose ", " (missing-name-or-city (read-file file-instance))))
+              ".\n You can continue at your own risk."))
+  (seesaw/config! send-button :enabled? true)
+)
+
+(defn check-file
+  [file error-type]
+  (seq (error-type (read-file file)))
+)
+
+(defn choose-csv-file
+  []
+  (when-let [file-instance (choose-file :filters [["CSV File" ["csv"] (constantly true)]
+                                             ["Folders" #(.isDirectory %)]
+                                             ])]
+    (if (csv? (str file-instance))
+      file-instance
+      (do
+        (alert "Choose a CSV (Comma-separated values) file.")
+        (seesaw/config! file-field :text "/")
+        (seesaw/config! send-button :enabled? false)
+        )
+      ))
+
+  )
+
+(defn ensure-no-errors
+  [file]
+  (if (check-file file errors)
+    (do (show-alert-error file)
+        nil)
+    file
+    )
+  )
+
+(defn show-warnings
+  [file]
+  (if (check-file file missing-name-or-city)
+    (do (show-alert-warning file)
+        file)
+    file
+    )
+  )
+
+(defn set-file-field!
+  [file]
+  (seesaw/config! file-field :text (str file))
+)
+
+(defn search-action-action
+  [e]
+  (when-let [file (choose-csv-file)]
+    (some-> file
+            ensure-no-errors
+            show-warnings
+            set-file-field!))
+  )
+(comment
+(defn search-action-action [e]
+  (if-let [file-instance (choose-csv-file)]
+    (seesaw/config! file-field :text (str file-instance))
+    (when (check-file file-instance missing-name-or-city)
+      (show-alert-warning file-instance))
+    (when (check-file file-instance errors)
+      (show-alert-error file-instance)))))
 
 (def search-action
   (seesaw/button
     :text "Browse file"
     :size [80 :by 25]
     :enabled? true
-    :listen [:action (fn [e] (if-let [f (choose-file :filters [["CSV File" ["csv"] (constantly true)]
-                                                               ["Folders" #(.isDirectory %)]
-                                                               ])]
-                                                 (if (is-csv? (str f))
-                                                   (do
-                                                     (seesaw/config! file-field :text (str f))
-                                                     (if (not (empty? (errors (read-file f))))
-                                                       (do (alert (str "There are erros in the lines: " (apply str (interpose ", " (errors (read-file f)))) ".\n Go back and fix it before continue."))
-                                                           (seesaw/config! send-button :enabled? false)
-                                                           )
-                                                       (if (not (empty? (warnings (read-file f))))
-                                                         (do (alert (str "There are warnings in the lines: " (apply str (interpose ", " (warnings (read-file f)))) ".\n You can continue at your own risk."))
-                                                             (seesaw/config! send-button :enabled? true)
-                                                             )
-                                                         (seesaw/config! send-button :enabled? true)
-                                                         )))
-                                                   (do
-                                                     (alert "Choose a CSV (Comma-separated values) file.")
-                                                     (seesaw/config! file-field :text "/")
-                                                     (seesaw/config! send-button :enabled? false)
-                                                   )
-                                                   )))]))
+    :listen [:action search-action-action]))
 
-(defn testing!
-  [yes-no]
-  (alter-var-root (var *test*) (fn [_] yes-no))
-  (if *test*
-    (do
-      (seesaw/config! search-action :enabled? false)
-      (seesaw/config! file-field :text @test-mode-file)
-      (seesaw/config! send-button :enabled? true))
-    (do
-      (seesaw/config! search-action :enabled? true)
-      (seesaw/config! file-field :text "/")
-      (seesaw/config! send-button :enabled? false)))
+(def config-test
+  (menu-item
+    :text "Change emails test file"
+    :listen [:action (fn [e]
+                       (when-let [file (choose-csv-file)]
+                         (reset! test-mode-file (str file))))]
+    )
   )
 
 (def check-test-mode (seesaw/checkbox
                        :text "Test mode"
                        :selected? false
                        :listen [:action (fn [e] (do
-                                                  (testing! (seesaw/config check-test-mode :selected?))
+                                                  (if (seesaw/config check-test-mode :selected?)
+                                                    (do
+                                                      (seesaw/config! search-action :enabled? false)
+                                                      (seesaw/config! file-field :text @test-mode-file)
+                                                      (seesaw/config! send-button :enabled? true))
+                                                    (do
+                                                      (seesaw/config! search-action :enabled? true)
+                                                      (seesaw/config! file-field :text "/")
+                                                      (seesaw/config! send-button :enabled? false)))
                                                   ))]
                        )
   )
@@ -171,6 +205,12 @@
   )
 )
 
-(defn -main [& args]
-  (display panel)
-  )
+(defn display
+  [content]
+  (let [window (seesaw/frame :title "Mass Email" :on-close :exit)]
+    (-> window
+        (seesaw/config! :content content
+                        :menubar
+                        (menubar :items
+                                 [(menu :text "Configs" :items [config-test])
+                                  ])) (seesaw/pack!) (seesaw/show!))))

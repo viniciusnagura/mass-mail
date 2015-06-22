@@ -2,13 +2,10 @@
   (:gen-class)
   (require [clojure.tools.cli :refer [cli]]
            [postal.core :refer [send-message]]
-           [semantic-csv.core :refer :all]
+           [semantic-csv.core :as sc]
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]
-           [taoensso.timbre :as timbre
-            :refer (log trace debug info warn error fatal report
-                        logf tracef debugf infof warnf errorf fatalf reportf
-                        spy)]
+           [taoensso.timbre :as timbre :refer [info]]
            [selmer.parser :as selmer]
            )
   )
@@ -19,47 +16,44 @@
 (def email (atom ""))
 (def pass (atom ""))
 (def sender-name (atom ""))
+(def ^:const email-pattern #"(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 
-(defn is-email?
+(defn email?
+  "Return trueth if email matches e-mail pattern"
   [email]
-  (let [regex (re-matches #"(?i)[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?" email)]
-    (if (= regex email)
-      true
-      false)
-    )
+  (re-matches email-pattern email)
   )
 
-(defn is-csv?
-  [file]
-  (let [ext "csv"]
-    (if (.endsWith file ext)
-      true
-      false
-      )
-    )
+(defn csv?
+  [^String filename]
+  (.endsWith filename ".csv")
   )
 
-(defn warnings
+(defn has-name&city
+  [address-map]
+  (and
+    (seq (:name address-map))
+    (seq (:city address-map))
+  )
+)
+
+(defn missing-name-or-city                                              ;rename to missing-name-or-city
   [list]
-  (keep-indexed #(if (or (= (get %2 :name) "") (= (get %2 :city) ""))
-            (+ 2 %1)) list))
+  (keep-indexed #(if-not (has-name&city %2) %1) list))
+
+(defn map-index->line-number
+  [coll]
+  (map #(+2 %) coll)
+)
 
 (defn errors
   [list]
-  (keep-indexed #(if (or (not (is-email? (get %2 :email))) (= (get %2 :email) ""))
-            (+ 2 %1)) list))
+  (keep-indexed #(if (or (not (email? (get %2 :email))) (= (get %2 :email) "")) (+ 2 %1))
+                list))
 
 (defn read-file
   [file]
-  (println "read-file")
-  (let [output (with-open [in-file (io/reader file)]
-               (->>
-                 (csv/parse-csv in-file)
-                 remove-comments
-                 mappify
-                 doall))]
-    output
-    )
+  (sc/slurp-csv file)
 )
 
 (defn create-body
@@ -90,25 +84,27 @@
   (send-message (connection) (create-message dest))
 )
 
-(defn send-email-2
+(defn send-email
   [dest]
-  (info "Sending to:" (get dest :email))
+  (timbre/info "Sending to:" (get dest :email))
   (let [result (send-email-private dest)]
-    (info "Sent: " result)
-    (reset! progress (inc @progress))
-    result)
+    (timbre/info "Sent: " result)
+    (reset! progress (inc @progress)))
 )
 
 (defn log-results
   [file]
   (let [dest (read-file file)
-        results (mapv send-email-2 dest)
+        results (mapv send-email dest)
         successes (filter #(= :SUCCESS (:error %)) results)]
     {:attempted (count results)
      :sent (count successes)})
   )
 
-(defn send-email
+
+
+
+(comment (defn send-email
   "Set all the informations that were given through command line or gui"
   ([file email password subject body sender-name]
    (let [dest (read-file file)
@@ -136,7 +132,7 @@
 
      ))
 
-  )
+  ))
 
 
 
