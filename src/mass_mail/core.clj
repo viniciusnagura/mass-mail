@@ -6,9 +6,7 @@
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]
            [taoensso.timbre :as timbre :refer [info]]
-           [selmer.parser :as selmer]
-           )
-  )
+           [selmer.parser :as selmer]))
 
 (def progress (atom 0))
 (def subject (atom "Subject"))
@@ -21,30 +19,25 @@
 (defn email?
   "Return trueth if email matches e-mail pattern"
   [email]
-  (re-matches email-pattern email)
-  )
+  (re-matches email-pattern email))
 
 (defn csv?
   [^String filename]
-  (.endsWith filename ".csv")
-  )
+  (.endsWith filename ".csv"))
 
 (defn has-name&city
   [address-map]
   (and
     (seq (:name address-map))
-    (seq (:city address-map))
-  )
-)
+    (seq (:city address-map))))
 
-(defn missing-name-or-city                                              ;rename to missing-name-or-city
+(defn missing-name-or-city
   [list]
   (keep-indexed #(if-not (has-name&city %2) %1) list))
 
 (defn map-index->line-number
   [coll]
-  (map #(+2 %) coll)
-)
+  (map #(+2 %) coll))
 
 (defn errors
   [list]
@@ -53,44 +46,37 @@
 
 (defn read-file
   [file]
-  (sc/slurp-csv file)
-)
+  (sc/slurp-csv file))
 
 (defn create-body
   [dest]
   (selmer/render "Hello {{name}}, \n\n {{body}} \n\n Bests, \n {{sender-name}}"
-                 {:name (:name dest) :body @body :sender-name @sender-name})
-)
+                 {:name (:name dest) :body @body :sender-name @sender-name}))
 
 (defn create-message
   [dest]
   {:from @email
    :to (:email dest)
    :subject @subject
-   :body (create-body dest)}
-)
+   :body (create-body dest)})
 
 (defn connection
   []
   {:host "smtp.gmail.com"
    :ssl true
    :user @email
-   :pass @pass
-   }
-)
+   :pass @pass})
 
 (defn- send-email-private
   [dest]
-  (send-message (connection) (create-message dest))
-)
+  (send-message (connection) (create-message dest)))
 
 (defn send-email
   [dest]
   (timbre/info "Sending to:" (get dest :email))
   (let [result (send-email-private dest)]
     (timbre/info "Sent: " result)
-    (reset! progress (inc @progress)))
-)
+    (reset! progress (inc @progress))))
 
 (defn log-results
   [file]
@@ -98,12 +84,14 @@
         results (mapv send-email dest)
         successes (filter #(= :SUCCESS (:error %)) results)]
     {:attempted (count results)
-     :sent (count successes)})
-  )
+     :sent (count successes)}))
 
 
 
 
+
+
+;----------- O L D   S E N D   M A I L ----------
 (comment (defn send-email
   "Set all the informations that were given through command line or gui"
   ([file email password subject body sender-name]
@@ -128,11 +116,8 @@
                    (error "Failed to send email to:" (str (val (first x))) "Error" (str e)))
                  )
                (reset! progress (inc @progress))
-               )) dest)
-
-     ))
-
-  ))
+               ))
+           dest)))))
 
 
 
