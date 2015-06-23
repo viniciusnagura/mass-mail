@@ -104,10 +104,9 @@
 
 (defn show-warnings
   [file]
-  (if (check-file file missing-name-or-city)
-    (do (warning-state file)
-        file)
-    file))
+  (when (check-file file missing-name-or-city)
+    (warning-state file))
+  file)
 
 (defn set-file-field!
   [file]
