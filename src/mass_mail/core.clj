@@ -25,6 +25,10 @@
   [^String filename]
   (.endsWith filename ".csv"))
 
+(defn map-index->line-number
+  [coll]
+  (map #(+ 2 %) coll))
+
 (defn has-name&city
   [address-map]
   (and
@@ -33,16 +37,17 @@
 
 (defn missing-name-or-city
   [list]
-  (keep-indexed #(if-not (has-name&city %2) %1) list))
+  (map-index->line-number (keep-indexed #(if-not (has-name&city %2) %1) list)))
 
-(defn map-index->line-number
-  [coll]
-  (map #(+2 %) coll))
+(defn check-email
+  [email-map]
+  (and
+    (email? (:email email-map))
+    (seq (:email email-map))))
 
-(defn errors
+(defn missing-email
   [list]
-  (keep-indexed #(if (or (not (email? (get %2 :email))) (= (get %2 :email) "")) (+ 2 %1))
-                list))
+  (map-index->line-number (keep-indexed #(if-not (check-email %2) %1) list)))
 
 (defn read-file
   [file]
@@ -85,41 +90,6 @@
         successes (filter #(= :SUCCESS (:error %)) results)]
     {:attempted (count results)
      :sent (count successes)}))
-
-
-
-
-
-
-;----------- O L D   S E N D   M A I L ----------
-(comment (defn send-email
-  "Set all the informations that were given through command line or gui"
-  ([file email password subject body sender-name]
-   (let [dest (read-file file)
-         conn {:host "smtp.gmail.com"
-               :ssl true
-               :user email
-               :pass password}
-         body (create-body (get dest :name))]
-
-     (mapv (fn[x]
-             (do
-               (try
-                 (info "Sending email to:" (str (val (first x))))
-                 (if (nil? (send-message conn {:from email
-                                               :to (get x :email)
-                                               :subject subject
-                                               :body body} ))
-                   (info "Failed to send email to:" (str (val (first x))))
-                   (info "Email sent to:" (str (val (first x)))))
-                 (catch Exception e
-                   (error "Failed to send email to:" (str (val (first x))) "Error" (str e)))
-                 )
-               (reset! progress (inc @progress))
-               ))
-           dest)))))
-
-
 
 ;------------ C O M M A N D    L I N E -----------
 (comment ([opts]

@@ -60,7 +60,6 @@
                                                   (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
                                                   (reset! progress 0)
                                                   (sending-mode-state)
-
                                                   (set-email-values)
 
                                                   (future
@@ -69,7 +68,7 @@
 
 (defn error-state
   [file-instance]
-  (alert (str "There are erros in the lines: " (apply str (interpose ", " (errors (read-file file-instance))))
+  (alert (str "There are erros in the lines: " (apply str (interpose ", " (missing-email (read-file file-instance))))
               ".\n Go back and fix it before continue."))
   (default-mode-state))
 
@@ -93,12 +92,12 @@
       (do
         (alert "Choose a CSV (Comma-separated values) file.")
         (seesaw/config! file-field :text "/")
-        (seesaw/config! send-button :enabled? false)
+        (default-mode-state)
         false))))
 
 (defn ensure-no-errors
   [file]
-  (if (check-file file errors)
+  (if (check-file file missing-email)
     (do (error-state file)
         nil)
     file))
@@ -156,8 +155,7 @@
 
 (defn pre-send-mode-state
   []
-  (do
-    (seesaw/config! send-button :enabled? true)))
+  (seesaw/config! send-button :enabled? true))
 
 (defn test-mode-state
   []
