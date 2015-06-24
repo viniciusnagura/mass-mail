@@ -1,12 +1,17 @@
 (ns mass-mail.core
   (:gen-class)
+  (:require [seesaw.core :as seesaw])
   (require [clojure.tools.cli :refer [cli]]
            [postal.core :refer [send-message]]
            [semantic-csv.core :as sc]
            [clojure-csv.core :as csv]
            [clojure.java.io :as io]
            [taoensso.timbre :as timbre :refer [info]]
-           [selmer.parser :as selmer]))
+           [selmer.parser :as selmer]
+           [clojure.core.async
+            :as a
+            :refer [>! <! >!! <!! go chan buffer close! thread
+                    alts! alts!! timeout]]))
 
 (def progress (atom 0))
 (def subject (atom "Subject"))
@@ -77,16 +82,16 @@
   (send-message (connection) (create-message dest)))
 
 (defn send-email
-  [dest]
+  [dest update-progress-bar]
   (timbre/info "Sending to:" (get dest :email))
   (let [result (send-email-private dest)]
     (timbre/info "Sent: " result)
-    (reset! progress (inc @progress))))
+    (update-progress-bar (reset! progress (inc @progress)))))
 
 (defn log-results
-  [file]
+  [file update-progress-bar]
   (let [dest (read-file file)
-        results (mapv send-email dest)
+        results (mapv #(send-email % update-progress-bar) dest)
         successes (filter #(= :SUCCESS (:error %)) results)]
     {:attempted (count results)
      :sent (count successes)}))

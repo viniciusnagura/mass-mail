@@ -3,7 +3,11 @@
   (:require [clojure.java.io :as io])
   (:require [clojure.string :as s])
   (:require [seesaw.core :as seesaw])
-  (require [mass-mail.core :refer :all]))
+  (require [mass-mail.core :refer :all]
+           [clojure.core.async
+            :as a
+            :refer [>! <! >!! <!! go chan buffer close! thread
+                    alts! alts!! timeout]]))
 
 (use 'seesaw.mig)
 (use 'seesaw.core)
@@ -20,9 +24,13 @@
 (def bar
   (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :paint-string? true :size [80 :by 25]))
 
-(add-watch progress :prog
+(comment (add-watch progress :prog
            (fn [k r old-value new-value]
-             (seesaw/config! bar :value new-value)))
+             (seesaw/config! bar :value new-value))))
+
+(defn update-progress-bar
+  [new-value]
+  (seesaw/config! bar :value new-value))
 
 (def file-field
   (seesaw/text :text "/" :columns 30 :editable? false))
@@ -44,27 +52,28 @@
 
 (defn set-email-values
   []
-  (do
-    (reset! email (seesaw/value email-field))
-    (reset! pass (seesaw/value password-field))
-    (reset! subject (seesaw/value subject-field))
-    (reset! body (seesaw/value content-field))
-    (reset! sender-name (seesaw/value name-field)))
-)
+  (reset! email (seesaw/value email-field))
+  (reset! pass (seesaw/value password-field))
+  (reset! subject (seesaw/value subject-field))
+  (reset! body (seesaw/value content-field))
+  (reset! sender-name (seesaw/value name-field)))
 
 (def send-button
   (seesaw/button
     :text "Send"
     :enabled? false
-    :size [150 :by 50] :listen [:action (fn [e] (do
+    :size [150 :by 50] :listen [:action (fn [e] (let [c (chan)]
+                                                  (do
                                                   (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
                                                   (reset! progress 0)
                                                   (sending-mode-state)
                                                   (set-email-values)
 
-                                                  (future
-                                                    (log-results (seesaw/value file-field))
-                                                    (default-mode-state))))]))
+                                                  (a/thread
+                                                    (a/>!! c (log-results (seesaw/value file-field) update-progress-bar))
+                                                    (default-mode-state))
+                                                  (a/close! c)
+                                                  )))]))
 
 (defn error-state
   [file-instance]
@@ -145,12 +154,11 @@
 
 (defn default-mode-state
   []
-  (do
-    (seesaw/config! search-action :enabled? true)
-    (seesaw/config! file-field :text "/")
-    (seesaw/config! send-button :enabled? false)
-    (seesaw/config! config-test :enabled? true)
-    (seesaw/config! check-test-mode :enabled? true)))
+  (seesaw/config! search-action :enabled? true)
+  (seesaw/config! file-field :text "/")
+  (seesaw/config! send-button :enabled? false)
+  (seesaw/config! config-test :enabled? true)
+  (seesaw/config! check-test-mode :enabled? true))
 
 (defn pre-send-mode-state
   []
@@ -158,18 +166,16 @@
 
 (defn test-mode-state
   []
-  (do
-    (seesaw/config! search-action :enabled? false)
-    (seesaw/config! file-field :text @test-mode-file)
-    (seesaw/config! send-button :enabled? true)))
+  (seesaw/config! search-action :enabled? false)
+  (seesaw/config! file-field :text @test-mode-file)
+  (seesaw/config! send-button :enabled? true))
 
 (defn sending-mode-state
   []
-  (do
-    (seesaw/config! search-action :enabled? false)
-    (seesaw/config! send-button :enabled? false)
-    (seesaw/config! config-test :enabled? false)
-    (seesaw/config! check-test-mode :enabled? false)))
+  (seesaw/config! search-action :enabled? false)
+  (seesaw/config! send-button :enabled? false)
+  (seesaw/config! config-test :enabled? false)
+  (seesaw/config! check-test-mode :enabled? false))
 
 (def grid-file (seesaw/grid-panel
                     :border "Choose a file"
