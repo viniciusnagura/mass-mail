@@ -5,7 +5,7 @@
   (:require [seesaw.core :as seesaw])
   (require [mass-mail.core :refer :all]
            [clojure.core.async
-            :as a
+            :as async
             :refer [>! <! >!! <!! go chan buffer close! thread
                     alts! alts!! timeout]]))
 
@@ -19,7 +19,10 @@
 (declare pre-send-mode-state)
 (declare sending-mode-state)
 
+(def flag (atom true))
+
 (def test-mode-file (atom "emails-test.csv"))
+
 
 (def bar
   (progress-bar :orientation :horizontal :min 0 :max 100 :value 0 :paint-string? true :size [80 :by 25]))
@@ -29,8 +32,9 @@
              (seesaw/config! bar :value new-value))))
 
 (defn update-progress-bar
-  [new-value]
-  (seesaw/config! bar :value new-value))
+  []
+  (let [new-value (seesaw/config bar :value)]
+    (seesaw/config! bar :value (inc new-value))))
 
 (def file-field
   (seesaw/text :text "/" :columns 30 :editable? false))
@@ -62,18 +66,24 @@
   (seesaw/button
     :text "Send"
     :enabled? false
-    :size [150 :by 50] :listen [:action (fn [e] (let [c (chan)]
-                                                  (do
-                                                  (seesaw/config! bar :max (count (read-file (seesaw/value file-field))))
+    :size [150 :by 50] :listen [:action (fn [e] (let [channel (chan)]
                                                   (reset! progress 0)
                                                   (sending-mode-state)
                                                   (set-email-values)
 
-                                                  (a/thread
-                                                    (a/>!! c (log-results (seesaw/value file-field) update-progress-bar))
-                                                    (default-mode-state))
-                                                  (a/close! c)
-                                                  )))]))
+                                                  (send-all-emails (seesaw/value file-field) channel)
+
+                                                  (async/thread
+                                                    (while @flag
+                                                      (let [x (async/<!! channel)]
+                                                      (cond
+                                                        (= x 1) (update-progress-bar)
+                                                        (= x 0) (do
+                                                                  (reset! flag false)
+                                                                  (default-mode-state))
+                                                        :else (seesaw/config! bar :max x)
+                                                      ))))
+                                                  ))]))
 
 (defn error-state
   [file-instance]

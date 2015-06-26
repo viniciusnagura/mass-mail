@@ -9,7 +9,7 @@
            [taoensso.timbre :as timbre :refer [info]]
            [selmer.parser :as selmer]
            [clojure.core.async
-            :as a
+            :as async
             :refer [>! <! >!! <!! go chan buffer close! thread
                     alts! alts!! timeout]]))
 
@@ -81,26 +81,33 @@
   [dest]
   (send-message (connection) (create-message dest)))
 
-(defn send-email
-  [dest update-progress-bar]
+(defn send&log-email
+  [dest channel]
   (timbre/info "Sending to:" (get dest :email))
   (let [result (send-email-private dest)]
     (timbre/info "Sent: " result)
-    (update-progress-bar (reset! progress (inc @progress)))))
 
-(defn log-results
-  [file update-progress-bar]
-  (let [dest (read-file file)
-        results (mapv #(send-email % update-progress-bar) dest)
-        successes (filter #(= :SUCCESS (:error %)) results)]
-    {:attempted (count results)
-     :sent (count successes)}))
+    (async/>!! channel 1)))
+
+(defn send-all-emails
+  [file channel]
+
+  (async/go
+    (async/>! channel (count (read-file file)))
+    (let [dest (read-file file)
+          results (mapv #(send&log-email % channel) dest)
+          successes (filter #(= :SUCCESS (:error %)) results)]
+          (async/>! channel 0)
+      {:attempted (count results)
+       :sent (count successes)}))
+
+  )
 
 ;------------ C O M M A N D    L I N E -----------
 (comment ([opts]
            (let [{file :file email :email password :password subject :subject body :body}
                  opts]
-             (send-email file email password subject body "name"))))
+             (send&log-email file email password subject body "name"))))
 (comment (defn -main
   "Read the list of email addresses and set the email informations"
   [& args]
@@ -117,4 +124,4 @@
           (:password opts)
           (:subject opts)
           (:body opts))
-      (send-email opts)))))
+      (send&log-email opts)))))
